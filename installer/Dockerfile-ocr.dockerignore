@@ -1,0 +1,12 @@
+**
+!installer/
+!installer/start-all.sh
+!installer/ocr/
+!installer/ocr/requirements.lock
+!installer/ocr/server.py
+!installer/ocr/prepare_models.py
+!installer/ocr/start-container.sh
+!installer/ocr/runtime/
+!installer/ocr/runtime/text-models/
+!installer/ocr/runtime/text-models/**
+**/__pycache__/

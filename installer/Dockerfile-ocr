@@ -1,0 +1,25 @@
+ARG MAXKB_IMAGE=maxkb:local
+FROM ${MAXKB_IMAGE} AS ocr-build
+ARG PIP_INDEX_URL=https://pypi.org/simple
+WORKDIR /opt/maxkb-ocr
+COPY installer/ocr/requirements.lock requirements.lock
+RUN python -m venv /opt/maxkb-ocr/venv && \
+    python -m uv pip install --python /opt/maxkb-ocr/venv/bin/python \
+    --index-url "${PIP_INDEX_URL}" -r requirements.lock
+COPY installer/ocr/server.py installer/ocr/prepare_models.py ./
+COPY installer/ocr/runtime/text-models models
+RUN python prepare_models.py /opt/maxkb-ocr/models
+
+FROM ${MAXKB_IMAGE}
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends -t trixie libgl1 libglib2.0-0 libgomp1 && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+COPY --from=ocr-build /opt/maxkb-ocr /opt/maxkb-ocr
+COPY --chmod=500 installer/ocr/start-container.sh /usr/bin/start-ocr.sh
+COPY --chmod=500 installer/start-all.sh /usr/bin/start-all.sh
+RUN sed -i 's/\r$//' /usr/bin/start-all.sh /usr/bin/start-ocr.sh && \
+    bash -n /usr/bin/start-all.sh /usr/bin/start-ocr.sh
+ENV MAXKB_OCR_ENABLED=true \
+    MAXKB_OCR_URL=http://127.0.0.1:11637 \
+    MAXKB_OCR_TOKEN_FILE=/opt/maxkb/ocr/token \
+    PADDLE_PDX_DISABLE_MODEL_SOURCE_CHECK=True

@@ -194,3 +194,10 @@ config.yml
 .SANDBOX_BANNED_HOSTS
 copilot-instructions.md
 .ai/
+/maxkb-*.tar
+/maxkb-*.tar.sha256
+
+# Local development notes and dependency drafts
+/.workbuddy/
+/.req2.txt
+/.requirements-win.txt

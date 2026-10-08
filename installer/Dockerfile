@@ -7,6 +7,7 @@ RUN cd ui && ls -la && if [ -d "dist" ]; then exit 0; fi && \
     find . -maxdepth 1 ! -name '.' ! -name 'dist' ! -name 'public' -exec rm -rf {} +
 
 FROM ghcr.io/1panel-dev/maxkb-base:python3.11-pg17.11-20260903 AS stage-build
+ARG PIP_INDEX_URL=https://pypi.org/simple
 COPY --chmod=700 . /opt/maxkb-app
 RUN apt-get update && \
     apt-get install -y --no-install-recommends gcc g++ gettext libexpat1-dev libffi-dev && \
@@ -15,12 +16,12 @@ RUN apt-get update && \
 WORKDIR /opt/maxkb-app
 RUN gcc -shared -fPIC -o ${MAXKB_SANDBOX_HOME}/lib/sandbox.so /opt/maxkb-app/installer/sandbox.c -ldl && \
     rm -rf /opt/maxkb-app/ui && \
-    pip install uv --break-system-packages && \
-    python -m uv pip install -r pyproject.toml && \
+    pip install --index-url "${PIP_INDEX_URL}" uv --break-system-packages && \
+    python -m uv pip install --index-url "${PIP_INDEX_URL}" -r pyproject.toml && \
     find /opt/maxkb-app  -depth \( -name ".git*" -o -name ".docker*" -o -name ".idea*" -o -name ".editorconfig*" -o -name ".prettierrc*" -o -name "README.md" -o -name "poetry.lock" -o -name "pyproject.toml"  \) -exec rm -rf {} + && \
     python /opt/maxkb-app/apps/manage.py compilemessages && \
     export PIP_TARGET=/opt/maxkb-app/sandbox/python-packages && \
-    python -m uv pip install --target=$PIP_TARGET requests pymysql psycopg2-binary && \
+    python -m uv pip install --index-url "${PIP_INDEX_URL}" --target=$PIP_TARGET requests pymysql psycopg2-binary && \
     rm -rf /opt/maxkb-app/installer
 COPY --from=web-build --chmod=700 ui /opt/maxkb-app/ui
 
